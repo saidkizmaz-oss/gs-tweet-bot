@@ -55,7 +55,9 @@ async def twitter_tara_async():
         return []
     try:
         from twscrape import API
-        api = API()
+        import os
+        tw_db = "/data/twscrape.db" if os.path.isdir("/data") else "twscrape.db"
+        api = API(tw_db)
         await api.pool.add_account(TW_USERNAME, TW_PASSWORD, TW_EMAIL, "")
         await api.pool.login_all()
         tweetler = []
