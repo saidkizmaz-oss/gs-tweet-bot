@@ -87,10 +87,8 @@ def gs_haberleri_cek():
     # RSS - çoklu kaynak
     kaynaklar = [
         "https://www.galatasaray.org/rss/haberler",
-        "https://feeds.feedburner.com/ntvspor-galatasaray",
-        "https://www.fanatik.com.tr/rss/galatasaray",
-        "https://www.milliyet.com.tr/rss/rssNew/spor-galatasaray-haberleri-rss.xml",
-        "https://www.sporx.com/rss/galatasaray",
+        "https://www.hurriyet.com.tr/rss/galatasaray",
+        "https://spor.haberler.com/rss/?category=galatasaray",
     ]
     for url in kaynaklar:
         try:
