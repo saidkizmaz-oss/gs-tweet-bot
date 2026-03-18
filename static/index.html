@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>GS Tweet Bot</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#1a1a2e;color:#eee;font-family:'Segoe UI',sans-serif;min-height:100vh}
+.header{background:linear-gradient(135deg,#dd0000,#ffcc00);padding:20px;text-align:center}
+.header h1{font-size:28px;color:#fff;text-shadow:0 2px 4px #0006}
+.header p{font-size:13px;color:#fff9;margin-top:4px}
+.container{max-width:800px;margin:0 auto;padding:20px}
+.chat-box{background:#16213e;border-radius:16px;padding:20px;margin-bottom:20px}
+.chat-box h2{font-size:16px;color:#ffcc00;margin-bottom:14px}
+textarea{width:100%;background:#0f3460;border:1px solid #ffffff22;color:#fff;padding:14px;border-radius:10px;font-size:14px;resize:vertical;min-height:100px;outline:none}
+textarea::placeholder{color:#ffffff55}
+textarea:focus{border-color:#ffcc00}
+.btn{width:100%;padding:14px;border-radius:10px;border:none;background:linear-gradient(135deg,#dd0000,#aa0000);color:#fff;font-size:15px;font-weight:700;cursor:pointer;margin-top:10px;transition:opacity .2s}
+.btn:hover{opacity:.85}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.status{text-align:center;padding:12px;border-radius:8px;margin-top:10px;font-size:13px;display:none}
+.status.ok{background:#00e67622;color:#00e676;border:1px solid #00e67644;display:block}
+.status.err{background:#ff174422;color:#ff1744;border:1px solid #ff174444;display:block}
+.gecmis{background:#16213e;border-radius:16px;padding:20px}
+.gecmis h2{font-size:16px;color:#ffcc00;margin-bottom:14px}
+.oneri-kart{background:#0f3460;border-radius:10px;padding:14px;margin-bottom:10px;border-left:3px solid #dd0000}
+.oneri-no{font-size:11px;color:#ffcc00;margin-bottom:6px}
+.oneri-text{font-size:14px;line-height:1.6;color:#eee}
+.oneri-meta{font-size:11px;color:#ffffff55;margin-top:8px}
+.copy-btn{background:#ffffff11;border:none;color:#aaa;padding:4px 10px;border-radius:6px;cursor:pointer;font-size:11px;margin-top:6px}
+.copy-btn:hover{background:#ffffff22;color:#fff}
+.empty{text-align:center;color:#ffffff44;padding:30px;font-size:13px}
+.spinner{display:inline-block;width:16px;height:16px;border:2px solid #ffffff44;border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite;vertical-align:middle;margin-right:8px}
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>🦁 GS Tweet Bot</h1>
+  <p>Fikirlerini yaz, AI tweet önerileri üretsin</p>
+</div>
+<div class="container">
+  <div class="chat-box">
+    <h2>💬 Fikir & Görüşlerini Yaz</h2>
+    <textarea id="fikir" placeholder="Örn: Bugün Icardi çok iyi oynadı, transferde Osimhen olmalı, derbi öncesi motivasyon tweet'i istiyorum..."></textarea>
+    <button class="btn" id="uretBtn" onclick="uret()">🚀 Tweet Önerileri Üret & Telegram'a Gönder</button>
+    <div class="status" id="status"></div>
+  </div>
+  <div class="gecmis">
+    <h2>📋 Son Öneriler</h2>
+    <div id="oneriler"><div class="empty">Henüz öneri yok</div></div>
+  </div>
+</div>
+<script>
+async function uret(){
+  const fikir = document.getElementById('fikir').value.trim();
+  const btn = document.getElementById('uretBtn');
+  const st = document.getElementById('status');
+  btn.disabled=true;
+  btn.innerHTML='<span class="spinner"></span>Hazırlanıyor...';
+  st.className='status';
+  try{
+    const r = await fetch('/api/uret',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({fikir})});
+    const d = await r.json();
+    if(d.ok){
+      st.className='status ok';
+      st.textContent='✅ '+d.mesaj;
+      document.getElementById('fikir').value='';
+      setTimeout(yukleOneriler, 5000);
+    }else{
+      st.className='status err';
+      st.textContent='❌ Hata oluştu';
+    }
+  }catch(e){
+    st.className='status err';
+    st.textContent='❌ Bağlantı hatası';
+  }
+  btn.disabled=false;
+  btn.innerHTML='🚀 Tweet Önerileri Üret & Telegram\'a Gönder';
+}
+
+async function yukleOneriler(){
+  const r = await fetch('/api/oneriler').then(r=>r.json()).catch(()=>({oneriler:[]}));
+  const list = r.oneriler||[];
+  if(!list.length){document.getElementById('oneriler').innerHTML='<div class="empty">Henüz öneri yok</div>';return;}
+  document.getElementById('oneriler').innerHTML = list.map((o,i)=>`
+    <div class="oneri-kart">
+      <div class="oneri-no">ÖNERI #${o.id} · ${o.tarih} ${o.saat}</div>
+      <div class="oneri-text">${o.icerik}</div>
+      <div>
+        <button class="copy-btn" onclick="kopyala(${o.id})">📋 Kopyala</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function kopyala(id){
+  const cards = document.querySelectorAll('.oneri-kart');
+  // find by id in list - just copy text
+  const text = cards[0]?.querySelector('.oneri-text')?.textContent;
+  navigator.clipboard.writeText(document.querySelectorAll('.oneri-text')[
+    [...document.querySelectorAll('.oneri-kart')].findIndex(c=>c.querySelector('.oneri-no').textContent.includes('#'+id))
+  ]?.textContent||'').then(()=>alert('Kopyalandı!'));
+}
+
+yukleOneriler();
+setInterval(yukleOneriler, 30000);
+</script>
+</body>
+</html>
