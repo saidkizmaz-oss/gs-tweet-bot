@@ -126,13 +126,15 @@ def gunluk_oneri_gonder(fikirler=""):
     telegram_gonder(mesaj)
     print(f"[{turkey_now().strftime('%H:%M')}] {len(tweets)} öneri Telegram'a gönderildi.")
 
+ONERI_SAATLERI = {8, 10, 12, 14, 16, 18, 20, 22, 0}  # 08:00'den 24:00'a her 2 saatte bir
+
 def zamanlayici():
+    son_gonderilen = -1
     while True:
         now = turkey_now()
-        # Her gün saat 09:00'da gönder
-        if now.hour == 9 and now.minute == 0:
+        if now.hour in ONERI_SAATLERI and now.minute == 0 and now.hour != son_gonderilen:
+            son_gonderilen = now.hour
             gunluk_oneri_gonder()
-            time.sleep(61)
         time.sleep(30)
 
 class Handler(BaseHTTPRequestHandler):
