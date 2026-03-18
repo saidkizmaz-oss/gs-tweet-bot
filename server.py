@@ -83,10 +83,13 @@ def gs_haberleri_cek():
     """RSS + Twitter ile GS içeriklerini çek"""
     haberler = []
 
-    # RSS
+    # RSS - çoklu kaynak
     kaynaklar = [
         "https://www.galatasaray.org/rss/haberler",
         "https://feeds.feedburner.com/ntvspor-galatasaray",
+        "https://www.fanatik.com.tr/rss/galatasaray",
+        "https://www.milliyet.com.tr/rss/rssNew/spor-galatasaray-haberleri-rss.xml",
+        "https://www.sporx.com/rss/galatasaray",
     ]
     for url in kaynaklar:
         try:
@@ -97,7 +100,8 @@ def gs_haberleri_cek():
             titles = re.findall(r'<title><!\[CDATA\[(.*?)\]\]></title>', content)[:5]
             if not titles:
                 titles = re.findall(r'<title>(.*?)</title>', content)[1:6]
-            haberler.extend([t.strip() for t in titles if t.strip()])
+            titles = [t.strip() for t in titles if t.strip() and len(t.strip()) > 10]
+            haberler.extend(titles)
         except:
             pass
 
@@ -106,26 +110,32 @@ def gs_haberleri_cek():
     for t in tweetler:
         haberler.append(f"[Twitter {t['likes']}❤️ {t['rt']}🔁] {t['text']}")
 
-    return haberler[:15] if haberler else ["Galatasaray haberleri yüklenemedi"]
+    return haberler[:20] if haberler else ["Galatasaray haberleri yüklenemedi"]
 
 def claude_tweet_onerisi(fikirler, haberler):
     if not ANTHROPIC_KEY:
         return ["API key eksik"]
     try:
-        sistem = """Sen Galatasaray taraftarı, tutkulu ve etkileşimi yüksek tweet içerikleri üreten bir sosyal medya uzmanısın.
-Galatasaray'ı her zaman savun, rakipleri nazikçe eleştir.
-Tweet'ler Türkçe, kısa, güçlü, emoji kullanan ve viral olabilecek tarzda olsun.
-Her tweet 280 karakteri geçmesin."""
+        sistem = """Sen Galatasaray Twitter fenomeni için içerik üreten bir uzmansın. Milyonlarca takipçisi olan GS hesaplarının tarzını biliyorsun.
 
-        kullanici = f"""Bugünkü GS haberleri:
+KURALLAR:
+- Güncel haberlerden SOMUT detaylar kullan (oyuncu adı, skor, transfer adı, vb.)
+- Genel "Galatasaray en iyisi" klişelerinden KAÇIN
+- Her tweet farklı bir his uyandırsın: öfke, gurur, dalga geçme, analiz, hype
+- Rakip takımlara (FB, BJK, TM) zaman zaman ince göndermeler yap
+- Gündem olan konuya doğrudan gir, soyut kalma
+- Emoji kullan ama abartma (max 3-4)
+- 280 karakter sınırını geçme
+- Türk Twitter dilini kullan: samimi, sokak dili, bazen caps lock vurgu"""
+
+        kullanici = f"""Bugünkü GS gündemi:
 {chr(10).join(['- ' + h for h in haberler])}
 
-Benim fikirlerim ve görüşlerim:
-{fikirler if fikirler else 'Yok, sadece haberlere göre üret'}
+{'Benim görüşüm/isteğim: ' + fikirler if fikirler else ''}
 
-Bunları harmanlayarak 10 farklı tweet önerisi üret. 
-Her birini numara ile listele (1. 2. vb).
-Çeşitli tarzlarda olsun: ateşli, analitik, mizahi, motivasyonel."""
+Bu gündemdeki SOMUT konulara dayalı 10 farklı tweet önerisi yaz.
+Haberlerdeki isim, skor, olay detaylarını direkt kullan — soyut kalma.
+Her birini numara ile listele (1. 2. vb)."""
 
         data = json.dumps({
             "model": "claude-haiku-4-5-20251001",
