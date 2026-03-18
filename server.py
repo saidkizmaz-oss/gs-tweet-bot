@@ -223,6 +223,63 @@ class Handler(BaseHTTPRequestHandler):
             threading.Thread(target=gunluk_oneri_gonder, args=(fikir,), daemon=True).start()
             self.send_json({"ok": True, "mesaj": "Öneriler hazırlanıyor, Telegram'a gelecek..."})
 
+        elif path == "/api/chat":
+            mesaj = body.get("mesaj", "")
+            gecmis = body.get("gecmis", [])[-6:]  # Son 6 mesaj bağlam
+            if not mesaj:
+                self.send_json({"cevap": "Mesaj boş"})
+                return
+            if not ANTHROPIC_KEY:
+                self.send_json({"cevap": "API key eksik"})
+                return
+            try:
+                sistem = """Sen bir Galatasaray Twitter fenomeninin kişisel asistanısın.
+Kullanıcı sana GS ile ilgili fikirlerini, güncel haberleri, düşüncelerini söyler.
+Sen hem sohbet edersin hem de gerektiğinde tweet önerileri üretirsin.
+
+TWEET ÜRETME: Kullanıcı tweet üretmeni isterse, "TWEET_URET:" ile başla ve 5-10 tweet yaz.
+Her tweeti yeni satırda numara ile listele. 280 karakter geçmesin. Türkçe, viral tarz.
+
+Aksi halde normal sohbet et — kısa, samimi, GS odaklı cevap ver."""
+
+                mesajlar = []
+                for m in gecmis:
+                    mesajlar.append({"role": m["role"], "content": m["content"]})
+                mesajlar.append({"role": "user", "content": mesaj})
+
+                data = json.dumps({
+                    "model": "claude-haiku-4-5-20251001",
+                    "max_tokens": 1500,
+                    "system": sistem,
+                    "messages": mesajlar
+                }).encode()
+                req = urllib.request.Request(
+                    "https://api.anthropic.com/v1/messages", data=data,
+                    headers={"Content-Type": "application/json", "x-api-key": ANTHROPIC_KEY, "anthropic-version": "2023-06-01"}
+                )
+                res = urllib.request.urlopen(req, timeout=30)
+                text = json.loads(res.read())["content"][0]["text"]
+
+                tweet_uretildi = False
+                if text.startswith("TWEET_URET:"):
+                    icerik = text[len("TWEET_URET:"):].strip()
+                    import re
+                    tweetler = re.findall(r'\d+\.\s*(.+?)(?=\n\d+\.|\Z)', icerik, re.DOTALL)
+                    tweetler = [t.strip() for t in tweetler if t.strip()]
+                    now = turkey_now()
+                    con = get_db()
+                    for t in tweetler:
+                        con.execute("INSERT INTO oneriler (icerik, kaynak, durum, tarih, saat) VALUES (?,?,?,?,?)",
+                            (t, "chat", "BEKLIYOR", now.strftime("%Y-%m-%d"), now.strftime("%H:%M")))
+                    con.commit(); con.close()
+                    threading.Thread(target=telegram_gonder, args=(f"🦁 <b>YENİ TWEET ÖNERİLERİ</b>\n\n" + "\n\n".join([f"<b>{i+1}.</b> {t}" for i,t in enumerate(tweetler)]),), daemon=True).start()
+                    text = icerik
+                    tweet_uretildi = True
+
+                self.send_json({"cevap": text, "tweet_uretildi": tweet_uretildi})
+            except Exception as e:
+                self.send_json({"cevap": f"Hata: {e}"})
+
         else:
             self.send_response(404); self.end_headers()
 

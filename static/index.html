@@ -6,106 +6,152 @@
 <title>GS Tweet Bot</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-body{background:#1a1a2e;color:#eee;font-family:'Segoe UI',sans-serif;min-height:100vh}
-.header{background:linear-gradient(135deg,#dd0000,#ffcc00);padding:20px;text-align:center}
-.header h1{font-size:28px;color:#fff;text-shadow:0 2px 4px #0006}
-.header p{font-size:13px;color:#fff9;margin-top:4px}
-.container{max-width:800px;margin:0 auto;padding:20px}
-.chat-box{background:#16213e;border-radius:16px;padding:20px;margin-bottom:20px}
-.chat-box h2{font-size:16px;color:#ffcc00;margin-bottom:14px}
-textarea{width:100%;background:#0f3460;border:1px solid #ffffff22;color:#fff;padding:14px;border-radius:10px;font-size:14px;resize:vertical;min-height:100px;outline:none}
-textarea::placeholder{color:#ffffff55}
-textarea:focus{border-color:#ffcc00}
-.btn{width:100%;padding:14px;border-radius:10px;border:none;background:linear-gradient(135deg,#dd0000,#aa0000);color:#fff;font-size:15px;font-weight:700;cursor:pointer;margin-top:10px;transition:opacity .2s}
-.btn:hover{opacity:.85}
-.btn:disabled{opacity:.5;cursor:not-allowed}
-.status{text-align:center;padding:12px;border-radius:8px;margin-top:10px;font-size:13px;display:none}
-.status.ok{background:#00e67622;color:#00e676;border:1px solid #00e67644;display:block}
-.status.err{background:#ff174422;color:#ff1744;border:1px solid #ff174444;display:block}
-.gecmis{background:#16213e;border-radius:16px;padding:20px}
-.gecmis h2{font-size:16px;color:#ffcc00;margin-bottom:14px}
-.oneri-kart{background:#0f3460;border-radius:10px;padding:14px;margin-bottom:10px;border-left:3px solid #dd0000}
+body{background:#1a1a2e;color:#eee;font-family:'Segoe UI',sans-serif;height:100dvh;display:flex;flex-direction:column}
+.header{background:linear-gradient(135deg,#dd0000,#ffcc00);padding:14px 20px;text-align:center;flex-shrink:0}
+.header h1{font-size:22px;color:#fff;text-shadow:0 2px 4px #0006}
+.tabs{display:flex;background:#16213e;border-bottom:1px solid #ffffff11;flex-shrink:0}
+.tab{flex:1;padding:11px;text-align:center;cursor:pointer;font-size:13px;font-weight:700;color:#ffffff55;border:none;background:transparent}
+.tab.active{color:#ffcc00;border-bottom:2px solid #ffcc00}
+.page{display:none;flex:1;overflow:hidden;flex-direction:column}
+.page.active{display:flex}
+
+/* CHAT */
+.chat-mesajlar{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:12px}
+.msg{max-width:85%;padding:12px 14px;border-radius:14px;font-size:14px;line-height:1.6;white-space:pre-wrap;word-break:break-word}
+.msg.user{background:#dd0000;color:#fff;align-self:flex-end;border-bottom-right-radius:4px}
+.msg.bot{background:#16213e;color:#eee;align-self:flex-start;border-bottom-left-radius:4px;border:1px solid #ffffff11}
+.msg.typing{color:#ffffff55;font-style:italic}
+.chat-input-wrap{padding:12px;background:#0d0d1f;border-top:1px solid #ffffff11;display:flex;gap:8px;flex-shrink:0}
+.chat-input{flex:1;background:#0f3460;border:1px solid #ffffff22;color:#fff;padding:12px 14px;border-radius:10px;font-size:14px;outline:none;resize:none;min-height:44px;max-height:120px;font-family:'Segoe UI',sans-serif}
+.chat-input:focus{border-color:#ffcc00}
+.send-btn{padding:0 18px;border-radius:10px;border:none;background:linear-gradient(135deg,#dd0000,#aa0000);color:#fff;font-size:20px;cursor:pointer;flex-shrink:0}
+.send-btn:disabled{opacity:.4}
+
+/* ÖNERİLER */
+.oneriler-wrap{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:10px}
+.oneri-kart{background:#16213e;border-radius:10px;padding:14px;border-left:3px solid #dd0000}
 .oneri-no{font-size:11px;color:#ffcc00;margin-bottom:6px}
 .oneri-text{font-size:14px;line-height:1.6;color:#eee}
-.oneri-meta{font-size:11px;color:#ffffff55;margin-top:8px}
-.copy-btn{background:#ffffff11;border:none;color:#aaa;padding:4px 10px;border-radius:6px;cursor:pointer;font-size:11px;margin-top:6px}
+.copy-btn{background:#ffffff11;border:none;color:#aaa;padding:4px 10px;border-radius:6px;cursor:pointer;font-size:11px;margin-top:8px}
 .copy-btn:hover{background:#ffffff22;color:#fff}
-.empty{text-align:center;color:#ffffff44;padding:30px;font-size:13px}
-.spinner{display:inline-block;width:16px;height:16px;border:2px solid #ffffff44;border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite;vertical-align:middle;margin-right:8px}
+.empty{text-align:center;color:#ffffff44;padding:40px;font-size:13px}
+.spinner{display:inline-block;width:14px;height:14px;border:2px solid #ffffff44;border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite;vertical-align:middle;margin-right:6px}
 @keyframes spin{to{transform:rotate(360deg)}}
 </style>
 </head>
 <body>
 <div class="header">
   <h1>🦁 GS Tweet Bot</h1>
-  <p>Fikirlerini yaz, AI tweet önerileri üretsin</p>
 </div>
-<div class="container">
-  <div class="chat-box">
-    <h2>💬 Fikir & Görüşlerini Yaz</h2>
-    <textarea id="fikir" placeholder="Örn: Bugün Icardi çok iyi oynadı, transferde Osimhen olmalı, derbi öncesi motivasyon tweet'i istiyorum..."></textarea>
-    <button class="btn" id="uretBtn" onclick="uret()">🚀 Tweet Önerileri Üret & Telegram'a Gönder</button>
-    <div class="status" id="status"></div>
+<div class="tabs">
+  <button class="tab active" onclick="goTab('chat',this)">💬 Chat</button>
+  <button class="tab" onclick="goTab('oneriler',this)">📋 Öneriler</button>
+</div>
+
+<!-- CHAT -->
+<div id="page-chat" class="page active">
+  <div class="chat-mesajlar" id="chatMesajlar">
+    <div class="msg bot">Merhaba! 🦁 Ben GS Tweet Bot'un asistanıyım.\n\nBana yazabilirsin:\n• "Bugün Osimhen hat-trick yaptı, tweet üret"\n• "Derbi öncesi ateşleyici 5 tweet"\n• "RAMS Park doluydu, o anı yaz"\n\nYazdığın tweet önerileri Telegram'a da gönderilir!</div>
   </div>
-  <div class="gecmis">
-    <h2>📋 Son Öneriler</h2>
-    <div id="oneriler"><div class="empty">Henüz öneri yok</div></div>
+  <div class="chat-input-wrap">
+    <textarea class="chat-input" id="chatInput" placeholder="Mesajını yaz..." rows="1" onkeydown="enterGonder(event)" oninput="autoResize(this)"></textarea>
+    <button class="send-btn" id="sendBtn" onclick="gonder()">➤</button>
   </div>
 </div>
+
+<!-- ÖNERİLER -->
+<div id="page-oneriler" class="page">
+  <div class="oneriler-wrap" id="onerilerListesi">
+    <div class="empty">Yükleniyor...</div>
+  </div>
+</div>
+
 <script>
-async function uret(){
-  const fikir = document.getElementById('fikir').value.trim();
-  const btn = document.getElementById('uretBtn');
-  const st = document.getElementById('status');
-  btn.disabled=true;
-  btn.innerHTML='<span class="spinner"></span>Hazırlanıyor...';
-  st.className='status';
-  try{
-    const r = await fetch('/api/uret',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({fikir})});
-    const d = await r.json();
-    if(d.ok){
-      st.className='status ok';
-      st.textContent='✅ '+d.mesaj;
-      document.getElementById('fikir').value='';
-      setTimeout(yukleOneriler, 5000);
-    }else{
-      st.className='status err';
-      st.textContent='❌ Hata oluştu';
-    }
-  }catch(e){
-    st.className='status err';
-    st.textContent='❌ Bağlantı hatası';
-  }
-  btn.disabled=false;
-  btn.innerHTML='🚀 Tweet Önerileri Üret & Telegram\'a Gönder';
+let gecmis = [];
+
+function goTab(id, btn) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+  btn.classList.add('active');
+  if (id === 'oneriler') yukleOneriler();
 }
 
-async function yukleOneriler(){
-  const r = await fetch('/api/oneriler').then(r=>r.json()).catch(()=>({oneriler:[]}));
-  const list = r.oneriler||[];
-  if(!list.length){document.getElementById('oneriler').innerHTML='<div class="empty">Henüz öneri yok</div>';return;}
-  document.getElementById('oneriler').innerHTML = list.map((o,i)=>`
+function autoResize(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+}
+
+function enterGonder(e) {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); gonder(); }
+}
+
+function mesajEkle(text, tip) {
+  const div = document.createElement('div');
+  div.className = 'msg ' + tip;
+  div.textContent = text;
+  const wrap = document.getElementById('chatMesajlar');
+  wrap.appendChild(div);
+  wrap.scrollTop = wrap.scrollHeight;
+  return div;
+}
+
+async function gonder() {
+  const input = document.getElementById('chatInput');
+  const btn = document.getElementById('sendBtn');
+  const mesaj = input.value.trim();
+  if (!mesaj) return;
+
+  input.value = '';
+  input.style.height = 'auto';
+  btn.disabled = true;
+
+  mesajEkle(mesaj, 'user');
+  gecmis.push({ role: 'user', content: mesaj });
+
+  const typing = mesajEkle('⏳ Düşünüyor...', 'bot typing');
+
+  try {
+    const r = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ mesaj, gecmis })
+    });
+    const d = await r.json();
+    typing.remove();
+
+    const cevap = d.cevap || 'Bir hata oluştu.';
+    mesajEkle(cevap, 'bot');
+    gecmis.push({ role: 'assistant', content: cevap });
+
+    if (d.tweet_uretildi) {
+      setTimeout(() => {
+        mesajEkle('✅ Tweet önerileri Telegram\'a gönderildi!', 'bot');
+        yukleOneriler();
+      }, 1000);
+    }
+  } catch(e) {
+    typing.remove();
+    mesajEkle('❌ Bağlantı hatası', 'bot');
+  }
+
+  btn.disabled = false;
+  input.focus();
+}
+
+async function yukleOneriler() {
+  const r = await fetch('/api/oneriler').then(r => r.json()).catch(() => ({ oneriler: [] }));
+  const list = r.oneriler || [];
+  const wrap = document.getElementById('onerilerListesi');
+  if (!list.length) { wrap.innerHTML = '<div class="empty">Henüz öneri yok</div>'; return; }
+  wrap.innerHTML = list.map(o => `
     <div class="oneri-kart">
-      <div class="oneri-no">ÖNERI #${o.id} · ${o.tarih} ${o.saat}</div>
+      <div class="oneri-no">#${o.id} · ${o.tarih} ${o.saat}</div>
       <div class="oneri-text">${o.icerik}</div>
-      <div>
-        <button class="copy-btn" onclick="kopyala(${o.id})">📋 Kopyala</button>
-      </div>
+      <button class="copy-btn" onclick="navigator.clipboard.writeText(this.previousElementSibling.textContent).then(()=>this.textContent='✅ Kopyalandı!')">📋 Kopyala</button>
     </div>
   `).join('');
 }
-
-function kopyala(id){
-  const cards = document.querySelectorAll('.oneri-kart');
-  // find by id in list - just copy text
-  const text = cards[0]?.querySelector('.oneri-text')?.textContent;
-  navigator.clipboard.writeText(document.querySelectorAll('.oneri-text')[
-    [...document.querySelectorAll('.oneri-kart')].findIndex(c=>c.querySelector('.oneri-no').textContent.includes('#'+id))
-  ]?.textContent||'').then(()=>alert('Kopyalandı!'));
-}
-
-yukleOneriler();
-setInterval(yukleOneriler, 30000);
 </script>
 </body>
 </html>
