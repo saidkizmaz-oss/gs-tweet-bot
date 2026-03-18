@@ -10,6 +10,7 @@ TELEGRAM_TOKEN = os.environ.get("TELEGRAM_TOKEN", "")
 TELEGRAM_CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID", "")
 TW_USERNAME = os.environ.get("TW_USERNAME", "")
 TW_PASSWORD = os.environ.get("TW_PASSWORD", "")
+TW_EMAIL = os.environ.get("TW_EMAIL", "")
 DB_PATH = os.path.join(os.path.dirname(__file__), "gs.db")
 
 # twscrape kurulu mu?
@@ -55,7 +56,7 @@ async def twitter_tara_async():
     try:
         from twscrape import API
         api = API()
-        await api.pool.add_account(TW_USERNAME, TW_PASSWORD, "", "")
+        await api.pool.add_account(TW_USERNAME, TW_PASSWORD, TW_EMAIL, "")
         await api.pool.login_all()
         tweetler = []
         async for tweet in api.search("Galatasaray lang:tr", limit=30):
