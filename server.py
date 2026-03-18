@@ -2,13 +2,22 @@
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from urllib.parse import urlparse, parse_qs
 from datetime import datetime, timedelta
-import json, os, threading, time, sqlite3, urllib.request, urllib.parse
+import json, os, threading, time, sqlite3, urllib.request, urllib.parse, asyncio
 
 PORT = int(os.environ.get("PORT", 8766))
 ANTHROPIC_KEY = os.environ.get("ANTHROPIC_KEY", "")
 TELEGRAM_TOKEN = os.environ.get("TELEGRAM_TOKEN", "")
 TELEGRAM_CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID", "")
+TW_USERNAME = os.environ.get("TW_USERNAME", "")
+TW_PASSWORD = os.environ.get("TW_PASSWORD", "")
 DB_PATH = os.path.join(os.path.dirname(__file__), "gs.db")
+
+# twscrape kurulu mu?
+try:
+    import twscrape
+    TWSCRAPE_OK = True
+except ImportError:
+    TWSCRAPE_OK = False
 
 def init_db():
     con = sqlite3.connect(DB_PATH)
@@ -39,9 +48,42 @@ def telegram_gonder(mesaj):
     except Exception as e:
         print(f"Telegram hata: {e}")
 
+async def twitter_tara_async():
+    """twscrape ile Twitter'dan GS tweetlerini çek"""
+    if not TWSCRAPE_OK or not TW_USERNAME or not TW_PASSWORD:
+        return []
+    try:
+        from twscrape import API
+        api = API()
+        await api.pool.add_account(TW_USERNAME, TW_PASSWORD, "", "")
+        await api.pool.login_all()
+        tweetler = []
+        async for tweet in api.search("Galatasaray lang:tr", limit=30):
+            if tweet.likeCount + tweet.retweetCount > 50:
+                tweetler.append({
+                    "text": tweet.rawContent[:200],
+                    "likes": tweet.likeCount,
+                    "rt": tweet.retweetCount
+                })
+        tweetler.sort(key=lambda x: x["likes"] + x["rt"]*2, reverse=True)
+        return tweetler[:10]
+    except Exception as e:
+        print(f"Twitter tarama hata: {e}")
+        return []
+
+def twitter_tara():
+    try:
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        return loop.run_until_complete(twitter_tara_async())
+    except:
+        return []
+
 def gs_haberleri_cek():
-    """RSS ile GS haberlerini çek"""
+    """RSS + Twitter ile GS içeriklerini çek"""
     haberler = []
+
+    # RSS
     kaynaklar = [
         "https://www.galatasaray.org/rss/haberler",
         "https://feeds.feedburner.com/ntvspor-galatasaray",
@@ -58,7 +100,13 @@ def gs_haberleri_cek():
             haberler.extend([t.strip() for t in titles if t.strip()])
         except:
             pass
-    return haberler[:10] if haberler else ["Galatasaray haberleri yüklenemedi"]
+
+    # Twitter
+    tweetler = twitter_tara()
+    for t in tweetler:
+        haberler.append(f"[Twitter {t['likes']}❤️ {t['rt']}🔁] {t['text']}")
+
+    return haberler[:15] if haberler else ["Galatasaray haberleri yüklenemedi"]
 
 def claude_tweet_onerisi(fikirler, haberler):
     if not ANTHROPIC_KEY:
