@@ -134,9 +134,9 @@ KURALLAR:
 
 {'Benim görüşüm/isteğim: ' + fikirler if fikirler else ''}
 
-Bu gündemdeki SOMUT konulara dayalı 10 farklı tweet önerisi yaz.
+Bu gündemdeki SOMUT konulara dayalı 1 tweet önerisi yaz.
 Haberlerdeki isim, skor, olay detaylarını direkt kullan — soyut kalma.
-Her birini numara ile listele (1. 2. vb)."""
+Sadece tweeti yaz, numara veya açıklama ekleme."""
 
         data = json.dumps({
             "model": "claude-haiku-4-5-20251001",
@@ -161,7 +161,7 @@ Her birini numara ile listele (1. 2. vb)."""
         import re
         tweets = re.findall(r'\d+\.\s*(.+?)(?=\n\d+\.|\Z)', text, re.DOTALL)
         tweets = [t.strip() for t in tweets if t.strip()]
-        return tweets[:10] if tweets else [text]
+        return tweets[:1] if tweets else [text.strip()]
     except Exception as e:
         print(f"Claude hata: {e}")
         return [f"Hata: {e}"]
@@ -237,7 +237,7 @@ class Handler(BaseHTTPRequestHandler):
 Kullanıcı sana GS ile ilgili fikirlerini, güncel haberleri, düşüncelerini söyler.
 Sen hem sohbet edersin hem de gerektiğinde tweet önerileri üretirsin.
 
-TWEET ÜRETME: Kullanıcı tweet üretmeni isterse, "TWEET_URET:" ile başla ve 5-10 tweet yaz.
+TWEET ÜRETME: Kullanıcı tweet üretmeni isterse, "TWEET_URET:" ile başla ve sadece 1 tweet yaz.
 Her tweeti yeni satırda numara ile listele. 280 karakter geçmesin. Türkçe, viral tarz.
 
 Aksi halde normal sohbet et — kısa, samimi, GS odaklı cevap ver."""
