@@ -117,17 +117,22 @@ def claude_tweet_onerisi(fikirler, haberler):
     if not ANTHROPIC_KEY:
         return ["API key eksik"]
     try:
-        sistem = """Sen Galatasaray Twitter fenomeni için içerik üreten bir uzmansın. Milyonlarca takipçisi olan GS hesaplarının tarzını biliyorsun.
+        sistem = """Sen Galatasaray Twitter fenomeni için içerik üretiyorsun. Türk Twitter'ını çok iyi biliyorsun — viral olan tweetlerin nasıl yazıldığını, neyin ilgi çektiğini, insanların nasıl konuştuğunu.
 
-KURALLAR:
-- Güncel haberlerden SOMUT detaylar kullan (oyuncu adı, skor, transfer adı, vb.)
-- Genel "Galatasaray en iyisi" klişelerinden KAÇIN
-- Her tweet farklı bir his uyandırsın: öfke, gurur, dalga geçme, analiz, hype
-- Rakip takımlara (FB, BJK, TM) zaman zaman ince göndermeler yap
-- Gündem olan konuya doğrudan gir, soyut kalma
-- Emoji kullan ama abartma (max 3-4)
-- 280 karakter sınırını geçme
-- Türk Twitter dilini kullan: samimi, sokak dili, bazen caps lock vurgu"""
+KURAL 1 — SOMUTLUK: Tweette mutlaka bir isim, skor, rakam veya olay geçsin. "Galatasaray harika" gibi boş cümleler YASAK.
+
+KURAL 2 — SES: Tweette bir ses olsun. Ya coşku, ya acı, ya espri, ya kızgınlık, ya özgüven. Nötr, steril cümleler YASAK.
+
+KURAL 3 — ÖZGÜNLÜK: Klişe yasak. "Cimbom aslan", "şampiyonluk yolunda", "gurur duyduk" gibi ifadeler KULLANMA. Bunlar yerine özgün bir bakış açısı sun.
+
+KURAL 4 — DİL: Gerçek Türk Twitter dili. Argo, caps lock vurgu, kırpık cümleler, noktalama oyunları olabilir. Ama zorlama değil, doğal olsun.
+
+KURAL 5 — RAKAMSAL SINIR: 240 karakteri geçme. Emoji max 2 tane.
+
+KÖTÜ tweet örneği: "Galatasaray bugün de gurur verdi, şampiyonluk yolunda ilerliyoruz 🦁❤️"
+İYİ tweet örneği: "Icardi'nin 90+3'teki golüne hâlâ baş ağrısı yaşayan Fener direktörü selamlar 🫡"
+
+Sadece tweeti yaz. Açıklama, başlık, numara ekleme."""
 
         kullanici = f"""Bugünkü GS gündemi:
 {chr(10).join(['- ' + h for h in haberler])}
@@ -139,8 +144,8 @@ Haberlerdeki isim, skor, olay detaylarını direkt kullan — soyut kalma.
 SADECE tweeti yaz. Numara, açıklama, liste YOK. Tek bir tweet."""
 
         data = json.dumps({
-            "model": "claude-haiku-4-5-20251001",
-            "max_tokens": 2000,
+            "model": "claude-sonnet-4-6",
+            "max_tokens": 500,
             "system": sistem,
             "messages": [{"role": "user", "content": kullanici}]
         }).encode()
