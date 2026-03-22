@@ -134,9 +134,9 @@ KURALLAR:
 
 {'Benim görüşüm/isteğim: ' + fikirler if fikirler else ''}
 
-Bu gündemdeki SOMUT konulara dayalı 1 tweet önerisi yaz.
+Bu gündemdeki SOMUT konulara dayalı TAM OLARAK 1 tweet yaz.
 Haberlerdeki isim, skor, olay detaylarını direkt kullan — soyut kalma.
-Sadece tweeti yaz, numara veya açıklama ekleme."""
+SADECE tweeti yaz. Numara, açıklama, liste YOK. Tek bir tweet."""
 
         data = json.dumps({
             "model": "claude-haiku-4-5-20251001",
@@ -158,10 +158,7 @@ Sadece tweeti yaz, numara veya açıklama ekleme."""
         result = json.loads(res.read())
         text = result["content"][0]["text"]
 
-        import re
-        tweets = re.findall(r'\d+\.\s*(.+?)(?=\n\d+\.|\Z)', text, re.DOTALL)
-        tweets = [t.strip() for t in tweets if t.strip()]
-        return tweets[:1] if tweets else [text.strip()]
+        return [text.strip()]
     except Exception as e:
         print(f"Claude hata: {e}")
         return [f"Hata: {e}"]
