@@ -171,6 +171,13 @@ SADECE tweeti yaz. Numara, açıklama, liste YOK. Tek bir tweet."""
 def gunluk_oneri_gonder(fikirler=""):
     print(f"[{turkey_now().strftime('%H:%M')}] Günlük öneriler hazırlanıyor...")
     haberler = gs_haberleri_cek()
+    if not fikirler:
+        con = get_db()
+        bugun = turkey_now().strftime("%Y-%m-%d")
+        rows = con.execute("SELECT fikir FROM fikirler WHERE tarih >= ? ORDER BY rowid DESC LIMIT 5", (bugun + " 00:00",)).fetchall()
+        con.close()
+        if rows:
+            fikirler = " | ".join([r[0] for r in rows])
     tweets = claude_tweet_onerisi(fikirler, haberler)
 
     now = turkey_now()
